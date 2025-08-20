@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-Parameter Data Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+        }
+
+        .upload-area {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group input {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            width: 150px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group small {
+            margin-top: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .chart-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-wrapper canvas {
+            max-height: 350px !important;
+            height: 350px !important;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+        }
+
+        .file-list {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-wrapper {
+                height: 400px;
+            }
+            
+            .chart-wrapper canvas {
+                max-height: 300px !important;
+                height: 300px !important;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .input-group input {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 S-Parameter Data Analyzer</h1>
+        
+        <div class="upload-section">
+            <div class="upload-area">
+                <input type="file" id="csvFiles" class="file-input" multiple accept=".csv">
+                <label for="csvFiles" class="upload-btn">📁 Insert CSV Files</label>
+                <p style="margin-top: 15px; color: #6c757d;">
+                    Insert S-parameter CSV files<br>
+                    <small>💡 If column A contains 'BEGIN' and 'END' markers, the data range is automatically detected.</small>
+                </p>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="refName">Reference File Name:</label>
+                    <input type="text" id="refName" value="REF100" placeholder="Ex: REF">
+                </div>
+                <div class="input-group">
+                    <label for="skipRows">Skip Rows:</label>
+                    <input type="number" id="skipRows" value="6" min="0" max="100">
+                    <small style="color: #6c757d;">Use only when the BEGIN marker is not present</small>
+                </div>
+                <div class="input-group">
+                    <label for="maxRows">Ma Rows:</label>
+                    <input type="number" id="maxRows" value="1001" min="1" max="10000">
+                    <small style="color: #6c757d;">Use only when the END marker is not present</small>
+                </div>
+            </div>
+            
+            <div class="progress-bar" style="display: none;">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="processData()" disabled id="processBtn">🔄 Data Processing</button>
+            <button class="btn" onclick="plotGraphs()" disabled id="plotBtn">📊 Plot Chart</button>
+            <button class="btn" onclick="exportData()" disabled id="exportBtn">💾 To Excel</button>
+            <button class="btn" onclick="clearAll()">🗑️ Clear All</button>
+        </div>
+
+        <div id="fileList" class="file-list" style="display: none;">
+            <h3>📋 Files Loaded:</h3>
+            <div id="files"></div>
+        </div>
+
+        <div id="formulaSection" class="formula-section" style="display: none;">
+            <h3>📐 Compensation Formula</h3>
+            <div class="formula-container">
+                <div class="formula-item">
+                    <h4>1. Reference Calculation</h4>
+                    <div class="formula-math">
+                        $\text{REF} = S_{21,\text{ref}} - 10 \log_{10}\left(1 - 10^{S_{11,\text{ref}}/10}\right)$
+                    </div>
+
+                </div>
+                <div class="formula-item">
+                    <h4>2. Compensated S21</h4>
+                    <div class="formula-math">
+                        $\text{Compensated S21} = \text{REF} - S_{21} + 10 \log_{10}\left(1 - 10^{S_{11}/10}\right)$
+                    </div>
+
+                </div>
+            </div>
+        </div>>
+            <div id="files"></div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <div class="chart-title">📈 Raw S21 Parameter (dB)</div>
+                <canvas id="rawS21Chart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">🎯 Compensated S21 (dB)</div>
+                <canvas id="compensatedS21Chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let processedData = {};
+        let frequencyData = [];
+        let fileNames = [];
+        let charts = {};
+
+        // 파일 선택 이벤트
+        document.getElementById('csvFiles').addEventListener('change', handleFiles);
+
+        function handleFiles(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const skipRows = parseInt(document.getElementById('skipRows').value) || 6;
+            const maxRows = parseInt(document.getElementById('maxRows').value) || 1001;
+
+            showStatus(`파일을 읽는 중... (BEGIN/END 마커 자동 감지 또는 ${skipRows}행 건너뛰고 ${maxRows}행 처리)`, 'info');
+            showProgress(true);
+            
+            fileNames = [];
+            processedData = {};
+            
+            let processedCount = 0;
+            const totalFiles = files.length;
+            
+            Array.from(files).forEach((file, index) => {
+                const fileName = file.name.replace('.csv', '');
+                fileNames.push(fileName);
+                
+                Papa.parse(file, {
+                    header: false, // 헤더를 자동으로 처리하지 않음
+                    skipEmptyLines: true,
+                    encoding: 'UTF-8',
+                    dynamicTyping: false,
+                    delimitersToGuess: [',', '\t', ';', '|'],
+                    complete: function(results) {
+                        try {
+                            console.log(`=== 파일 분석: ${fileName} ===`);
+                            console.log('전체 행 수:', results.data.length);
+                            console.log('첫 10행 샘플:', results.data.slice(0, 10));
+                            
+                            // BEGIN과 END 마커 찾기
+                            let beginIndex = -1;
+                            let endIndex = -1;
+                            let headerIndex = -1;
+                            
+                            for (let i = 0; i < results.data.length; i++) {
+                                const row = results.data[i];
+                                if (row && row.length > 0) {
+                                    const firstCell = String(row[0]).trim().toUpperCase();
+                                    
+                                    if (firstCell === 'BEGIN') {
+                                        beginIndex = i;
+                                        console.log(`BEGIN 발견: 행 ${i}`);
+                                    } else if (firstCell === 'END') {
+                                        endIndex = i;
+                                        console.log(`END 발견: 행 ${i}`);
+                                        break;
+                                    }
+                                    
+                                    // BEGIN 이후에 헤더 찾기 (주파수 관련 헤더가 있는 행)
+                                    if (beginIndex >= 0 && headerIndex === -1) {
+                                        const cellStr = String(row[0]).trim();
+                                        if (cellStr.toLowerCase().includes('freq') || 
+                                            cellStr.includes('Hz') || 
+                                            cellStr.toLowerCase().includes('frequency')) {
+                                            headerIndex = i;
+                                            console.log(`헤더 발견: 행 ${i}`, row);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            console.log(`마커 위치 - BEGIN: ${beginIndex}, END: ${endIndex}, HEADER: ${headerIndex}`);
+                            
+                            // 데이터 범위 결정
+                            let dataStartIndex, dataEndIndex;
+                            
+                            if (beginIndex >= 0 && endIndex >= 0) {
+                                // BEGIN/END 마커가 있는 경우
+                                dataStartIndex = headerIndex >= 0 ? headerIndex + 1 : beginIndex + 1;
+                                dataEndIndex = endIndex;
+                                console.log(`BEGIN/END 마커 사용: ${dataStartIndex} ~ ${dataEndIndex}`);
+                            } else if (beginIndex >= 0) {
+                                // BEGIN만 있는 경우
+                                dataStartIndex = headerIndex >= 0 ? headerIndex + 1 : beginIndex + 1;
+                                dataEndIndex = Math.min(dataStartIndex + maxRows, results.data.length);
+                                console.log(`BEGIN 마커만 사용: ${dataStartIndex} ~ ${dataEndIndex}`);
+                            } else {
+                                // 마커가 없는 경우 기존 방식 사용
+                                dataStartIndex = skipRows;
+                                dataEndIndex = Math.min(skipRows + maxRows, results.data.length);
+                                console.log(`마커 없음, 기존 방식 사용: ${dataStartIndex} ~ ${dataEndIndex}`);
+                            }
+                            
+                            // 헤더 추출
+                            let headers = [];
+                            if (headerIndex >= 0) {
+                                headers = results.data[headerIndex].map(h => String(h).trim());
+                            } else {
+                                // 헤더를 찾지 못한 경우 데이터 시작 직전 행에서 추출 시도
+                                const headerCandidateIndex = dataStartIndex - 1;
+                                if (headerCandidateIndex >= 0 && headerCandidateIndex < results.data.length) {
+                                    headers = results.data[headerCandidateIndex].map(h => String(h).trim());
+                                }
+                            }
+                            
+                            console.log('추출된 헤더:', headers);
+                            
+                            // 데이터 행 추출
+                            const rows = results.data.slice(dataStartIndex, dataEndIndex);
+                            
+                            if (rows.length === 0) {
+                                throw new Error(`${fileName}: 데이터가 없습니다. BEGIN: ${beginIndex}, END: ${endIndex}, 데이터 범위: ${dataStartIndex}-${dataEndIndex}`);
+                            }
+                            
+                            console.log(`처리할 행 수: ${rows.length} (${dataStartIndex}행부터 ${dataEndIndex}행까지)`);
+                            console.log('처리할 데이터 샘플:', rows.slice(0, 3));
+                            
+                            // 가능한 헤더 이름들 확인
+                            console.log('사용 가능한 헤더:', headers);
+                            
+                            // 주파수 컬럼 찾기
+                            let freqIndex = -1;
+                            const freqCandidates = ['Freq(Hz)', 'Frequency(Hz)', 'Frequency', 'Freq', 'freq', 'FREQ'];
+                            for (let i = 0; i < headers.length; i++) {
+                                const header = headers[i].trim();
+                                if (freqCandidates.some(candidate => 
+                                    header.toLowerCase().includes(candidate.toLowerCase()) ||
+                                    header.includes('Hz'))) {
+                                    freqIndex = i;
+                                    break;
+                                }
+                            }
+                            
+                            // S11 컬럼 찾기
+                            let s11Index = -1;
+                            const s11Candidates = ['S11(DB)', 'S11(dB)', 'S11_dB', 'S11', 's11'];
+                            for (let i = 0; i < headers.length; i++) {
+                                const header = headers[i].trim();
+                                if (s11Candidates.some(candidate => 
+                                    header.toLowerCase() === candidate.toLowerCase() ||
+                                    (header.includes('S11') && (header.includes('dB') || header.includes('DB'))))) {
+                                    s11Index = i;
+                                    break;
+                                }
+                            }
+                            
+                            // S21 컬럼 찾기
+                            let s21Index = -1;
+                            const s21Candidates = ['S21(DB)', 'S21(dB)', 'S21_dB', 'S21', 's21'];
+                            for (let i = 0; i < headers.length; i++) {
+                                const header = headers[i].trim();
+                                if (s21Candidates.some(candidate => 
+                                    header.toLowerCase() === candidate.toLowerCase() ||
+                                    (header.includes('S21') && (header.includes('dB') || header.includes('DB'))))) {
+                                    s21Index = i;
+                                    break;
+                                }
+                            }
+                            
+                            console.log(`발견된 컬럼 인덱스: Freq=${freqIndex}(${headers[freqIndex]}), S11=${s11Index}(${headers[s11Index]}), S21=${s21Index}(${headers[s21Index]})`);
+                            
+                            if (freqIndex === -1 || s11Index === -1 || s21Index === -1) {
+                                throw new Error(`${fileName}: 필요한 컬럼을 찾을 수 없습니다. 필요: Freq(Hz), S11(DB), S21(DB). 발견된 헤더: ${headers.join(', ')}`);
+                            }
+                            
+                            // 데이터 파싱
+                            const data = rows.map((row, idx) => {
+                                const freqStr = String(row[freqIndex] || '').trim();
+                                const s11Str = String(row[s11Index] || '').trim();
+                                const s21Str = String(row[s21Index] || '').trim();
+                                
+                                const freq = parseFloat(freqStr);
+                                const s11 = parseFloat(s11Str);
+                                const s21 = parseFloat(s21Str);
+                                
+                                if (idx < 3) {
+                                    console.log(`행 ${idx}: ${freqStr} -> ${freq}, ${s11Str} -> ${s11}, ${s21Str} -> ${s21}`);
+                                }
+                                
+                                return {
+                                    freq: isNaN(freq) ? 0 : freq,
+                                    s11: isNaN(s11) ? 0 : s11,
+                                    s21: isNaN(s21) ? 0 : s21
+                                };
+                            }).filter(item => item.freq > 0);
+                            
+                            console.log(`유효한 데이터 포인트: ${data.length}개`);
+                            console.log('첫 3개 데이터:', data.slice(0, 3));
+                            
+                            if (data.length === 0) {
+                                throw new Error(`${fileName}: 유효한 데이터가 없습니다. 주파수 값이 0보다 큰 데이터가 없습니다.`);
+                            }
+                            
+                            processedData[fileName] = data;
+                            
+                            // 첫 번째 파일의 주파수를 기준으로 설정
+                            if (index === 0) {
+                                frequencyData = data.map(item => item.freq);
+                            }
+                            
+                            processedCount++;
+                            updateProgress((processedCount / totalFiles) * 100);
+                            
+                            if (processedCount === totalFiles) {
+                                showFileList();
+                                showStatus(`${totalFiles}개 파일이 성공적으로 로드되었습니다.`, 'success');
+                                document.getElementById('processBtn').disabled = false;
+                                showProgress(false);
+                            }
+                        } catch (error) {
+                            showStatus(`파일 처리 오류: ${error.message}`, 'error');
+                            showProgress(false);
+                        }
+                    },
+                    error: function(error) {
+                        showStatus(`파일 읽기 오류: ${error.message}`, 'error');
+                        showProgress(false);
+                    }
+                });
+            });
+        }
+
+        function showFileList() {
+            const fileListDiv = document.getElementById('fileList');
+            const filesDiv = document.getElementById('files');
+            
+            filesDiv.innerHTML = '';
+            fileNames.forEach(name => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>📄 ${name}</span>
+                    <span>${processedData[name] ? processedData[name].length + ' 데이터 포인트' : '오류'}</span>
+                `;
+                filesDiv.appendChild(fileItem);
+            });
+            
+            fileListDiv.style.display = 'block';
+        }
+
+        function processData() {
+            const refName = document.getElementById('refName').value.trim();
+            
+            if (!refName || !processedData[refName]) {
+                showStatus(`기준 파일 '${refName}'을 찾을 수 없습니다.`, 'error');
+                return;
+            }
+            
+            showStatus('데이터를 처리하는 중...', 'info');
+            
+            try {
+                // REF 계산 (기준 파일의 compensated S21)
+                const refData = processedData[refName];
+                const refValues = refData.map(item => {
+                    const s11Linear = Math.pow(10, item.s11 / 10);
+                    const correction = 10 * Math.log10(1 - s11Linear);
+                    return item.s21 - correction;
+                });
+                
+                // 각 파일에 대해 Compensated S21 값 계산
+                const compensatedS21Data = {};
+                
+                Object.keys(processedData).forEach(fileName => {
+                    const fileData = processedData[fileName];
+                    const compensatedValues = fileData.map((item, index) => {
+                        if (index >= refValues.length) return 0;
+                        
+                        const s11Linear = Math.pow(10, item.s11 / 10);
+                        const correction = 10 * Math.log10(1 - s11Linear);
+                        
+                        if (fileName === refName) {
+                            // 기준 파일의 경우 REF 값 사용
+                            return refValues[index];
+                        } else {
+                            // 다른 파일의 경우 AP 계산: REF - S21 + correction
+                            return refValues[index] - item.s21 + correction;
+                        }
+                    });
+                    
+                    compensatedS21Data[fileName] = compensatedValues;
+                });
+                
+                // 전역 변수에 저장
+                window.refValues = refValues;
+                window.compensatedS21Data = compensatedS21Data;
+                
+                showStatus('데이터 처리가 완료되었습니다.', 'success');
+                document.getElementById('plotBtn').disabled = false;
+                document.getElementById('exportBtn').disabled = false;
+                
+            } catch (error) {
+                showStatus(`데이터 처리 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function plotGraphs() {
+            showStatus('그래프를 생성하는 중...', 'info');
+            
+            try {
+                // 기존 차트 제거
+                Object.values(charts).forEach(chart => chart.destroy());
+                charts = {};
+                
+                const frequencyGHz = frequencyData.map(f => (f / 1e9).toFixed(3)); // GHz로 변환, 소수점 3자리
+                
+                // Raw S21 차트 (왼쪽)
+                const rawS21Data = {
+                    labels: frequencyGHz,
+                    datasets: fileNames.map((name, index) => ({
+                        label: name,
+                        data: processedData[name].map(item => item.s21),
+                        borderColor: getColor(index),
+                        backgroundColor: getColor(index, 0.1),
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0
+                    }))
+                };
+                
+                charts.rawS21 = new Chart(document.getElementById('rawS21Chart'), {
+                    type: 'line',
+                    data: rawS21Data,
+                    options: getChartOptions('Raw S21 Parameter', 'Frequency (GHz)', 'S21 (dB)')
+                });
+                
+                // Compensated S21 차트 (오른쪽) - REF 제외
+                if (window.compensatedS21Data) {
+                    const refName = document.getElementById('refName').value.trim();
+                    const compensatedDataKeys = Object.keys(window.compensatedS21Data).filter(name => name !== refName);
+                    
+                    const compensatedData = {
+                        labels: frequencyGHz,
+                        datasets: compensatedDataKeys.map((name, index) => ({
+                            label: name,
+                            data: window.compensatedS21Data[name],
+                            borderColor: getColor(index),
+                            backgroundColor: getColor(index, 0.1),
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        }))
+                    };
+                    
+                    charts.compensatedS21 = new Chart(document.getElementById('compensatedS21Chart'), {
+                        type: 'line',
+                        data: compensatedData,
+                        options: getChartOptions('Compensated S21 (AP)', 'Frequency (GHz)', 'Compensated S21 (dB)')
+                    });
+                }
+                
+                showStatus('그래프가 생성되었습니다.', 'success');
+                
+            } catch (error) {
+                showStatus(`그래프 생성 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function getColor(index, alpha = 1) {
+            const colors = [
+                `rgba(102, 126, 234, ${alpha})`,
+                `rgba(118, 75, 162, ${alpha})`,
+                `rgba(40, 167, 69, ${alpha})`,
+                `rgba(255, 193, 7, ${alpha})`,
+                `rgba(220, 53, 69, ${alpha})`,
+                `rgba(23, 162, 184, ${alpha})`,
+                `rgba(108, 117, 125, ${alpha})`,
+                `rgba(255, 87, 34, ${alpha})`,
+                `rgba(156, 39, 176, ${alpha})`,
+                `rgba(76, 175, 80, ${alpha})`,
+                `rgba(63, 81, 181, ${alpha})`,
+                `rgba(233, 30, 99, ${alpha})`,
+                `rgba(0, 150, 136, ${alpha})`,
+                `rgba(255, 152, 0, ${alpha})`,
+                `rgba(121, 85, 72, ${alpha})`
+            ];
+            return colors[index % colors.length];
+        }
+
+        function getChartOptions(title, xLabel, yLabel) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            },
+                            boxWidth: 12,
+                            boxHeight: 12
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: xLabel,
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            font: { size: 10 }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: yLabel,
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            font: { size: 10 }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                elements: {
+                    line: {
+                        tension: 0
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 10
+                    }
+                }
+            };
+        }
+
+        function exportData() {
+            if (!window.compensatedS21Data || Object.keys(window.compensatedS21Data).length === 0) {
+                showStatus('내보낼 데이터가 없습니다. 먼저 데이터를 처리하세요.', 'error');
+                return;
+            }
+            
+            showStatus('Excel 파일을 생성하는 중...', 'info');
+            
+            try {
+                const refName = document.getElementById('refName').value.trim();
+                const dataKeys = Object.keys(window.compensatedS21Data).filter(name => name !== refName);
+                
+                // CSV 형태로 데이터 구성 (REF 제외)
+                let csvContent = 'Frequency(Hz)';
+                dataKeys.forEach(name => {
+                    csvContent += `,${name}_CompensatedS21(dB)`;
+                });
+                csvContent += '\n';
+                
+                // 데이터 행 추가
+                for (let i = 0; i < frequencyData.length; i++) {
+                    csvContent += frequencyData[i];
+                    dataKeys.forEach(name => {
+                        const value = window.compensatedS21Data[name][i] || 0;
+                        csvContent += `,${value.toFixed(6)}`;
+                    });
+                    csvContent += '\n';
+                }
+                
+                // 파일 다운로드
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'Compensated_S21_Analysis.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus('Excel 파일이 다운로드되었습니다.', 'success');
+                
+            } catch (error) {
+                showStatus(`파일 내보내기 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAll() {
+            processedData = {};
+            frequencyData = [];
+            fileNames = [];
+            window.refValues = null;
+            window.compensatedS21Data = null;
+            
+            document.getElementById('csvFiles').value = '';
+            document.getElementById('fileList').style.display = 'none';
+            document.getElementById('status').style.display = 'none';
+            
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('plotBtn').disabled = true;
+            document.getElementById('exportBtn').disabled = true;
+            
+            // 차트 제거
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            showStatus('모든 데이터가 초기화되었습니다.', 'info');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function showProgress(show) {
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.display = show ? 'block' : 'none';
+            if (!show) {
+                updateProgress(0);
+            }
+        }
+
+        function updateProgress(percentage) {
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.width = percentage + '%';
+        }
+    </script>
+</body>
+</html>
