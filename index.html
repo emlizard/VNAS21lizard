@@ -22,6 +22,7 @@
     </header>
 
     <main class="container">
+        <!-- Controls & Upload Section -->
         <div class="card animate-in">
             <h2 class="card-title"><span class="card-icon">⚙️</span>Controls & Upload</h2>
             <div class="grid grid-2">
@@ -55,6 +56,7 @@
             <div id="status" class="status" style="display: none; margin-top: 15px;"></div>
         </div>
 
+        <!-- File List & Formula Section -->
         <div class="grid grid-2">
             <div id="fileList" class="card animate-in" style="display: none;">
                 <h2 class="card-title"><span class="card-icon">📋</span>Files Loaded</h2>
@@ -63,12 +65,14 @@
             <div id="formulaSection" class="card animate-in">
                 <h2 class="card-title"><span class="card-icon">📐</span>Compensation Formula</h2>
                 <div class="formula-math">
-                    <p>\small \text{REF} = S_{21,\text{ref}} - 10 \log_{10}\left(1 - 10^{S_{11,\text{ref}}/10}\right)</p>
-                    <p>\small \text{Compensated S21} = \text{REF} - S_{21} + 10 \log_{10}\left(1 - 10^{S_{11}/10}\right)</p>
+                    <!-- [FIX] 각 수식을 $$...$$로 감싸 MathJax가 인식하도록 수정 -->
+                    <p>$$\small \text{REF} = S_{21,\text{ref}} - 10 \log_{10}\left(1 - 10^{S_{11,\text{ref}}/10}\right)$$</p>
+                    <p>$$\small \text{Compensated S21} = \text{REF} - S_{21} + 10 \log_{10}\left(1 - 10^{S_{11}/10}\right)$$</p>
                 </div>
             </div>
         </div>
 
+        <!-- Charts Section -->
         <div class="grid grid-2" id="charts-section" style="display:none;">
             <div class="card animate-in">
                 <h2 class="card-title">📈 Raw S21 (dB)</h2>
