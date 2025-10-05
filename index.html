@@ -47,10 +47,10 @@
                 </div>
             </div>
             <div class="controls" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn" onclick="processData()" disabled id="processBtn">🔄 Process Data</button>
-                <button class="btn btn-secondary" onclick="plotGraphs()" disabled id="plotBtn">📊 Plot Charts</button>
-                <button class="btn" onclick="exportData()" disabled id="exportBtn">💾 Export to Excel</button>
-                <button class="btn" onclick="clearAll()" style="background: var(--error);">🗑️ Clear All</button>
+                <button class="btn" id="processBtn" disabled>🔄 Process Data</button>
+                <button class="btn btn-secondary" id="plotBtn" disabled>📊 Plot Charts</button>
+                <button class="btn" id="exportBtn" disabled>💾 Export to Excel</button>
+                <button class="btn" id="clearBtn" style="background: var(--error);">🗑️ Clear All</button>
             </div>
             <div id="status" class="status" style="display: none; margin-top: 15px;"></div>
         </div>
@@ -60,7 +60,7 @@
                 <h2 class="card-title"><span class="card-icon">📋</span>Files Loaded</h2>
                 <div id="files"></div>
             </div>
-            <div class="card animate-in">
+            <div id="formulaSection" class="card animate-in">
                 <h2 class="card-title"><span class="card-icon">📐</span>Compensation Formula</h2>
                 <div class="formula-math">
                     <p>$\small \text{REF} = S_{21,\text{ref}} - 10 \log_{10}\left(1 - 10^{S_{11,\text{ref}}/10}\right)$</p>
